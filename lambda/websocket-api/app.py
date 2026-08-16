@@ -34,13 +34,25 @@ API_GW_CLIENT = boto3.client("apigatewaymanagementapi", endpoint_url=os.environ.
 SQS_CLIENT = boto3.client("sqs", region_name=os.environ.get("AWS_REGION", "us-west-2"))
 
 
+def get_db_secret():
+    """get database credentials from secrets manager."""
+    secret_id = os.environ.get("SECRET_ID", "devops/rds-credentials")
+    secrets = boto3.client("secretsmanager", region_name=os.environ.get("AWS_REGION", "us-west-2"))
+    get_secret = secrets.get_secret_value(SecretId=secret_id)
+    creds = json.loads(get_secret.get("SecretString"))
+
+    return creds
+
+
 def get_db_connection():
-    """Create a database connection using environment variables."""
-    host = os.environ.get("DB_HOST", "localhost")
-    port = os.environ.get("DB_PORT", "5432")
-    dbname = os.environ.get("DB_NAME", "devopsdb")
-    user = os.environ.get("DB_USER", "devopsadmin")
-    password = os.environ.get("DB_PASSWORD", "password")
+    """Create a database connection using environment variables or Secrets Manager."""
+    creds = get_db_secret()
+
+    host = os.environ.get("DB_HOST") or creds["host"]
+    port = os.environ.get("DB_PORT") or creds["port"]
+    dbname = os.environ.get("DB_NAME") or creds["dbname"]
+    user = os.environ.get("DB_USER") or creds["username"]
+    password = creds["password"]
 
     conn = psycopg2.connect(
         host=host,
