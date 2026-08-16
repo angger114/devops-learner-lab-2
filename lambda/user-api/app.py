@@ -14,6 +14,7 @@ import json
 import logging
 import os
 import uuid
+import boto3
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -37,13 +38,25 @@ def get_cognito_claims(event):
         return {}
 
 
+def get_db_secret():
+    """get database credentials from secrets manager."""
+    secret_id = os.environ.get("SECRET_ID", "devops/rds-credentials")
+    secrets = boto3.client("secretsmanager", region_name=os.environ.get("AWS_REGION", "us-west-2"))
+    get_secret = secrets.get_secret_value(SecretId=secret_id)
+    creds = json.loads(get_secret.get("SecretString"))
+
+    return creds
+
+
 def get_db_connection():
     """Create a database connection using environment variables or Secrets Manager."""
-    host = os.environ.get("DB_HOST", "localhost")
-    port = os.environ.get("DB_PORT", "5432")
-    dbname = os.environ.get("DB_NAME", "devopsdb")
-    user = os.environ.get("DB_USER", os.environ.get("DB_USERNAME", "devopsadmin"))
-    password = os.environ.get("DB_PASSWORD", "password")
+    creds = get_db_secret()
+
+    host = os.environ.get("DB_HOST") or creds["host"]
+    port = os.environ.get("DB_PORT") or creds["port"]
+    dbname = os.environ.get("DB_NAME") or creds["dbname"]
+    user = os.environ.get("DB_USER") or creds["username"]
+    password = creds["password"]
     sslmode = os.environ.get("DB_SSLMODE", "prefer")
 
     conn = psycopg2.connect(
