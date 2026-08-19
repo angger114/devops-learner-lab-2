@@ -273,8 +273,13 @@ def lambda_handler(event, context):
     )
     path = event.get("path", "/users")
     path_params = event.get("pathParameters") or {}
-    query_params = event.get("queryStringParameters") or {}
 
+    if not path_params.get("id") and path path_params.get("proxy"):
+        path_params = dict(path_params)
+        path_params["id"] = path_params["proxy"].split("/")[0]
+
+    query_params = event.get("queryStringParameters") or {}
+    
     # Handle CORS preflight
     if http_method == "OPTIONS":
         return response(200, {"message": "OK"})
