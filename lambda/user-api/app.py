@@ -279,7 +279,7 @@ def lambda_handler(event, context):
         path_params["id"] = path_params["proxy"].split("/")[0]
 
     query_params = event.get("queryStringParameters") or {}
-    
+
     # Handle CORS preflight
     if http_method == "OPTIONS":
         return response(200, {"message": "OK"})
