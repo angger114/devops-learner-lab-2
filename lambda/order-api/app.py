@@ -450,6 +450,11 @@ def lambda_handler(event, context):
         or event.get("requestContext", {}).get("http", {}).get("path", "/orders")
     )
     path_params = event.get("pathParameters") or {}
+
+    if not path_params.get("id") or path_params.get("proxy"):
+        path_params = dict(path_params)
+        path_params["id"] = path_params["proxy"].split("/")[0]
+
     query_params = event.get("queryStringParameters") or {}
 
     # Extract authenticated user from Cognito
