@@ -451,7 +451,7 @@ def lambda_handler(event, context):
     )
     path_params = event.get("pathParameters") or {}
 
-    if not path_params.get("id") or path_params.get("proxy"):
+    if not path_params.get("id") and path_params.get("proxy"):
         path_params = dict(path_params)
         path_params["id"] = path_params["proxy"].split("/")[0]
 
